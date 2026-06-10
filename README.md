@@ -65,7 +65,7 @@ sudo ./install.sh
 - `ls`, `ll`, `la` — через `eza` с иконками
 - `find` — через `fzf`
 
-## 📌 Recommendations
+## 📌 Рекомендации
 
 - При использовании **Windows Terminal** + рекмоендую поставить **Nerd Font** https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip (MesloLGS NF, JetBrainsMono NF, etc.) для нормального отображения иконок в терминале.
 ---
