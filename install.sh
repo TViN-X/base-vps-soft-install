@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # =============================================
-# Универсальный скрипт установки терминала + сетевых утилит
-# Для Ubuntu / Debian VPS
+# Base VPS Soft Install Script
+# Для Ubuntu 24.04 / Debian 12
 # =============================================
 
 set -e
@@ -15,83 +15,63 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${BLUE}=============================================${NC}"
-echo -e "${BLUE}   Установка терминала и утилит${NC}"
+echo -e "${BLUE}   Установка терминала и утилит для ubuntu 24 и debian 12${NC}"
 echo -e "${BLUE}=============================================${NC}"
-echo ""
 
 # Выбор языка
-echo "Выберите язык интерфейса / Choose language:"
+echo -e "\nВыберите язык интерфейса / Choose language:"
 echo "1) Русский"
 echo "2) English"
-read -p "Введите номер (1/2): " lang_choice
+read -r LANG_CHOICE
 
-if [[ "$lang_choice" == "2" ]]; then
-    LANG="en"
-    MSG_WELCOME="Starting installation..."
+if [[ "$LANG_CHOICE" == "2" ]]; then
+    LANG_EN=true
     MSG_UPDATE="Updating package lists..."
     MSG_INSTALL="Installing packages..."
-    MSG_ZSH="Setting up Zsh with Powerlevel10k..."
-    MSG_ALIASES="Adding aliases..."
-    MSG_FINISH="Installation completed successfully!"
+    MSG_DONE="Installation completed successfully!"
 else
-    LANG="ru"
-    MSG_WELCOME="Запуск установки..."
+    LANG_EN=false
     MSG_UPDATE="Обновление списка пакетов..."
     MSG_INSTALL="Установка пакетов..."
-    MSG_ZSH="Настройка Zsh с Powerlevel10k..."
-    MSG_ALIASES="Добавление алиасов..."
-    MSG_FINISH="Установка успешно завершена!"
+    MSG_DONE="Установка успешно завершена!"
 fi
 
-echo -e "${GREEN}$MSG_WELCOME${NC}"
+# Обновление системы
+echo -e "\n${YELLOW}$MSG_UPDATE${NC}"
+apt update -qq
 
-# Обновление
-echo -e "${YELLOW}$MSG_UPDATE${NC}"
-sudo apt update -qq
+# Добавление репозитория eza
+echo -e "\n${YELLOW}Добавление репозитория eza...${NC}"
+apt install -y wget gnupg
+wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | tee /etc/apt/sources.list.d/gierens.list
+apt update -qq
 
-# Установка пакетов
-echo -e "${YELLOW}$MSG_INSTALL${NC}"
+# Установка всех пакетов
+echo -e "\n${YELLOW}$MSG_INSTALL${NC}"
 
-sudo apt install -y \
-    zsh curl git fonts-powerline \
-    eza btop htop tcpdump nmap iperf3 \
-    curl wget traceroute whois duf fzf \
-    bat ripgrep
+apt install -y \
+    zsh curl git wget unzip \
+    eza btop htop duf fzf \
+    tcpdump nmap iperf3 traceroute whois \
+    speedtest-cli
 
-# speedtest-cli (Ookla)
-if ! command -v speedtest &> /dev/null; then
-    echo "Установка speedtest-cli..."
-    curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash
-    sudo apt install -y speedtest
-fi
-
-echo -e "${GREEN}Основные пакеты установлены.${NC}"
-
-# === Настройка Zsh ===
-echo -e "${YELLOW}$MSG_ZSH${NC}"
-
-# Oh My Zsh
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-fi
+# Установка Oh My Zsh + Powerlevel10k
+echo -e "\n${YELLOW}Установка Oh My Zsh и Powerlevel10k...${NC}"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
 # Powerlevel10k
-if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k" ]; then
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
-fi
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
 
 # Плагины
-git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" 2>/dev/null || true
-git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" 2>/dev/null || true
-git clone --depth=1 https://github.com/zsh-users/zsh-completions.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-completions" 2>/dev/null || true
+git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-completions ~/.oh-my-zsh/custom/plugins/zsh-completions
 
 # Создание .zshrc
-cat > ~/.zshrc << 'EOF'
-# Enable Powerlevel10k instant prompt
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
+cat > ~/.zshrc << 'EOL'
+# Oh My Zsh
+export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(
@@ -103,52 +83,36 @@ plugins=(
 
 source $ZSH/oh-my-zsh.sh
 
-# Aliases
+# Алиасы
 alias ls="eza --icons --group-directories-first"
 alias ll="eza -lh --icons --group-directories-first"
 alias la="eza -lah --icons --group-directories-first"
 alias l="eza -lh --icons --group-directories-first"
-alias cat="bat"
+alias cat="batcat 2>/dev/null || cat"
 alias find="fzf"
 
-# History
-HISTSIZE=10000
-SAVEHIST=10000
-setopt SHARE_HISTORY
-EOF
+# Powerlevel10k instant prompt
+[[ ! -r ~/.p10k.zsh ]] || source ~/.p10k.zsh
+EOL
 
-# Сделать zsh оболочкой по умолчанию
-sudo chsh -s $(which zsh) $USER
+# Делаем zsh оболочкой по умолчанию
+chsh -s $(which zsh) "$SUDO_USER" 2>/dev/null || chsh -s $(which zsh)
 
-echo -e "${GREEN}Zsh настроен. После перелогина запустится мастер настройки Powerlevel10k.${NC}"
-echo -e "${YELLOW}Пройдите интерактивный wizard для выбора стиля (рекомендуется Lean + Unicode + Icons).${NC}"
+echo -e "\n${GREEN}$MSG_DONE${NC}"
+echo -e "\n${YELLOW}Для применения изменений выполните:${NC}"
+echo -e "   exit"
+echo -e "и подключитесь заново по SSH.\n"
 
-# Сообщение о финале
-echo ""
-echo -e "${BLUE}=============================================${NC}"
-echo -e "${GREEN}$MSG_FINISH${NC}"
-echo -e "${BLUE}=============================================${NC}"
-echo ""
+echo -e "${BLUE}Доступные команды после установки:${NC}"
+echo -e "  ${GREEN}btop${NC}          — красивый мониторинг системы"
+echo -e "  ${GREEN}htop${NC}          — классический мониторинг процессов"
+echo -e "  ${GREEN}eza (ls/ll/la)${NC} — современный ls с иконками"
+echo -e "  ${GREEN}fzf${NC}           — нечёткий поиск (alias find)"
+echo -e "  ${GREEN}duf${NC}           — удобный просмотр дисков"
+echo -e "  ${GREEN}nmap${NC}          — сканирование сети"
+echo -e "  ${GREEN}tcpdump${NC}       — захват трафика"
+echo -e "  ${GREEN}iperf3${NC}        — тестирование скорости"
+echo -e "  ${GREEN}speedtest${NC}     — тест скорости интернета"
+echo -e "  ${GREEN}powerlevel10k${NC} — запустится автоматически при первом входе"
 
-echo "Доступные команды после установки:"
-echo "────────────────────────────────────"
-echo "zsh          - Современная оболочка с Powerlevel10k"
-echo "eza / ls     - Красивый ls с иконками"
-echo "btop         - Красивый мониторинг системы (рекомендуется)"
-echo "htop         - Классический мониторинг процессов"
-echo "tcpdump      - Захват трафика"
-echo "nmap         - Сканирование сети"
-echo "iperf3       - Тестирование пропускной способности"
-echo "speedtest    - Тест скорости интернета"
-echo "duf          - Красивый df"
-echo "fzf          - Fuzzy finder"
-echo "traceroute   - Трассировка маршрута"
-echo "whois        - Информация о домене"
-echo ""
-echo -e "${YELLOW}Перелогиньтесь или выполните 'exec zsh' для применения изменений.${NC}"
-echo -e "${YELLOW}После первого запуска zsh пройдите настройку Powerlevel10k.${NC}"
-
-# Показ текущих процессов в конце
-echo ""
-echo -e "${BLUE}Текущие процессы:${NC}"
-ps aux --sort=-%cpu | head -15
+echo -e "\n${YELLOW}Рекомендация:${NC} После первого входа пройдите настройку Powerlevel10k."
