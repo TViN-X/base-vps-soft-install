@@ -1,19 +1,26 @@
 #!/bin/bash
 # =============================================
 # Base VPS Soft Install Script
-# Для Ubuntu 24.04 / Debian 12
+# Ubuntu 24.04 / Debian 12
 # =============================================
 
 set -e
 
-# Обработка аргументов
+# =============================================
+# Args
+# =============================================
+
 REINSTALL=false
+
 if [[ "$1" == "--reinstall" || "$1" == "-r" ]]; then
     REINSTALL=true
-    echo -e "\033[1;33m⚠️  Режим полной переустановки включён\033[0m"
+    echo -e "\033[1;33m⚠️  Reinstall mode enabled\033[0m"
 fi
 
-# Цвета
+# =============================================
+# Colors
+# =============================================
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -21,12 +28,18 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${BLUE}=============================================${NC}"
-echo -e "${BLUE}   Установка терминала и утилит для VPS${NC}"
+echo -e "${BLUE}   VPS Base Soft Install${NC}"
 echo -e "${BLUE}=============================================${NC}"
 
-# Выбор языка
-echo -e "\nВыберите язык интерфейса / Choose language:"
-echo "1) Русский"
+# =============================================
+# Force TTY input (fix curl | bash issue)
+# =============================================
+
+exec < /dev/tty
+
+echo
+echo "Select language:"
+echo "1) Russian"
 echo "2) English"
 read -r LANG_CHOICE
 
@@ -34,62 +47,134 @@ if [[ "$LANG_CHOICE" == "2" ]]; then
     MSG_UPDATE="Updating package lists..."
     MSG_INSTALL="Installing packages..."
     MSG_DONE="Installation completed successfully!"
-    MSG_REINSTALL="Full reinstall mode"
 else
     MSG_UPDATE="Обновление списка пакетов..."
     MSG_INSTALL="Установка пакетов..."
     MSG_DONE="Установка успешно завершена!"
-    MSG_REINSTALL="Полная переустановка"
 fi
 
-# Если режим переустановки — очищаем старые конфиги
+# =============================================
+# User detection
+# =============================================
+
+TARGET_USER="${SUDO_USER:-$USER}"
+TARGET_HOME=$(eval echo "~$TARGET_USER")
+
+# =============================================
+# Cleanup
+# =============================================
+
 if [[ "$REINSTALL" == true ]]; then
-    echo -e "\n${YELLOW}Выполняется очистка перед переустановкой...${NC}"
-    rm -rf ~/.oh-my-zsh ~/.p10k.zsh ~/.zshrc ~/.nanorc 2>/dev/null || true
-    echo -e "${GREEN}Старые конфигурации удалены${NC}"
+    echo -e "\n${YELLOW}Cleaning old configuration...${NC}"
+
+    rm -rf \
+        "$TARGET_HOME/.oh-my-zsh" \
+        "$TARGET_HOME/.p10k.zsh" \
+        "$TARGET_HOME/.zshrc" \
+        "$TARGET_HOME/.nanorc" \
+        "$TARGET_HOME/.config/mc" \
+        "$TARGET_HOME/.local/share/mc" \
+        /tmp/mashdark
+
+    echo -e "${GREEN}Old configs removed${NC}"
 fi
 
-# Обновление системы
-echo -e "\n${YELLOW}$MSG_UPDATE${NC}"
+# =============================================
+# Update system
+# =============================================
+
+echo -e "\n${YELLOW}${MSG_UPDATE}${NC}"
 apt update -qq
 
-# Добавление репозитория eza
-if ! grep -q "deb.gierens.de" /etc/apt/sources.list.d/gierens.list 2>/dev/null || [[ "$REINSTALL" == true ]]; then
-    echo -e "\n${YELLOW}Добавление/обновление репозитория eza...${NC}"
-    apt install -y wget gnupg
-    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | tee /etc/apt/sources.list.d/gierens.list
-fi
-apt update -qq
+# =============================================
+# Required system packages
+# =============================================
 
-# Установка пакетов
-echo -e "\n${YELLOW}$MSG_INSTALL${NC}"
 apt install -y \
-    zsh curl git wget unzip \
-    eza btop htop duf fzf mc nano \
-    tcpdump nmap iperf3 traceroute whois \
-    speedtest-cli
+    zsh curl git wget unzip nano mc \
+    eza btop htop duf fzf \
+    tcpdump nmap iperf3 traceroute whois speedtest-cli \
+    bat
 
-# Установка Oh My Zsh + Powerlevel10k
-if [[ ! -d ~/.oh-my-zsh ]] || [[ "$REINSTALL" == true ]]; then
-    echo -e "\n${YELLOW}Установка Oh My Zsh и Powerlevel10k...${NC}"
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+# =============================================
+# Keyrings
+# =============================================
+
+mkdir -p /etc/apt/keyrings
+
+# =============================================
+# EZA repo
+# =============================================
+
+if ! grep -q "deb.gierens.de" /etc/apt/sources.list.d/gierens.list 2>/dev/null || [[ "$REINSTALL" == true ]]; then
+
+    echo -e "\n${YELLOW}Adding eza repo...${NC}"
+
+    apt install -y gnupg
+
+    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc \
+        | gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+
+    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
+        > /etc/apt/sources.list.d/gierens.list
 fi
 
-if [[ ! -d ~/.oh-my-zsh/custom/themes/powerlevel10k ]] || [[ "$REINSTALL" == true ]]; then
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
+apt update -qq
+
+# =============================================
+# Oh My Zsh
+# =============================================
+
+if [[ ! -d "$TARGET_HOME/.oh-my-zsh" ]] || [[ "$REINSTALL" == true ]]; then
+    echo -e "\n${YELLOW}Installing Oh My Zsh...${NC}"
+
+    sudo -u "$TARGET_USER" sh -c \
+    "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
+    "" --unattended
 fi
 
-# Плагины (устанавливаем только если нет)
+# =============================================
+# Powerlevel10k
+# =============================================
+
+if [[ ! -d "$TARGET_HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]] || [[ "$REINSTALL" == true ]]; then
+    git clone --depth=1 \
+        https://github.com/romkatv/powerlevel10k.git \
+        "$TARGET_HOME/.oh-my-zsh/custom/themes/powerlevel10k"
+fi
+
+# =============================================
+# ZSH plugins
+# =============================================
+
 for plugin in zsh-autosuggestions zsh-syntax-highlighting zsh-completions; do
-    if [[ ! -d ~/.oh-my-zsh/custom/plugins/$plugin ]] || [[ "$REINSTALL" == true ]]; then
-        git clone --depth=1 https://github.com/zsh-users/$plugin ~/.oh-my-zsh/custom/plugins/$plugin 2>/dev/null || true
+    if [[ ! -d "$TARGET_HOME/.oh-my-zsh/custom/plugins/$plugin" ]] || [[ "$REINSTALL" == true ]]; then
+        git clone --depth=1 \
+            "https://github.com/zsh-users/$plugin" \
+            "$TARGET_HOME/.oh-my-zsh/custom/plugins/$plugin" \
+            2>/dev/null || true
     fi
 done
 
-# Создание .zshrc
-cat > ~/.zshrc << 'EOL'
+# =============================================
+# Download p10k config (IMPORTANT FIX)
+# =============================================
+
+echo -e "\n${YELLOW}Downloading Powerlevel10k config...${NC}"
+
+curl -fsSL \
+https://raw.githubusercontent.com/TViN-X/base-vps-soft-install/main/p10k.zsh \
+-o "$TARGET_HOME/.p10k.zsh"
+
+chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.p10k.zsh"
+
+# =============================================
+# .zshrc
+# =============================================
+
+cat > "$TARGET_HOME/.zshrc" << 'EOF'
 export ZSH="$HOME/.oh-my-zsh"
+
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(
@@ -101,58 +186,89 @@ plugins=(
 
 source $ZSH/oh-my-zsh.sh
 
-# ====================== Курсор ======================
-# Постоянный тонкий мигающий курсор
+# Cursor fix
 echo -ne '\e[5 q'
-
-function fix_cursor() {
-  echo -ne '\e[5 q'
-}
+function fix_cursor() { echo -ne '\e[5 q' }
 precmd_functions+=(fix_cursor)
 
-# Алиасы
+# Aliases
 alias ls="eza --icons --group-directories-first"
 alias ll="eza -lh --icons --group-directories-first"
 alias la="eza -lah --icons --group-directories-first"
 alias l="eza -lh --icons --group-directories-first"
-alias cat="batcat 2>/dev/null || cat"
-alias find="fzf"
+
+alias cat="batcat 2>/dev/null || bat"
+alias ff="fzf"
 
 # Powerlevel10k
-[[ ! -r ~/.p10k.zsh ]] || source ~/.p10k.zsh
-EOL
+[[ -r ~/.p10k.zsh ]] && source ~/.p10k.zsh
+EOF
 
-# Настройка nano
-cat > ~/.nanorc << 'NANO'
+chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.zshrc"
+
+# =============================================
+# nano config
+# =============================================
+
+cat > "$TARGET_HOME/.nanorc" << 'EOF'
 set linenumbers
 set mouse
-set historylog
 set autoindent
 set tabsize 4
+set softwrap
+set constantshow
 set minibar
 set stateflags
-set indicator
-set constantshow
-set softwrap
-set atblanks
-set backup
-set locking
 include "/usr/share/nano/*.nanorc"
-NANO
+EOF
 
-# Смена оболочки по умолчанию
-if [[ "$SHELL" != */zsh ]]; then
-    chsh -s $(which zsh) "$SUDO_USER" 2>/dev/null || chsh -s $(which zsh)
+chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.nanorc"
+
+# =============================================
+# Midnight Commander + MashDark theme
+# =============================================
+
+echo -e "\n${YELLOW}Installing MC theme MashDark...${NC}"
+
+rm -rf /tmp/mashdark
+git clone https://github.com/notnout/mashdark.git /tmp/mashdark
+
+mkdir -p "$TARGET_HOME/.local/share/mc/skins"
+mkdir -p "$TARGET_HOME/.config/mc"
+
+cp /tmp/mashdark/MashDark.ini \
+   "$TARGET_HOME/.local/share/mc/skins/"
+
+cat > "$TARGET_HOME/.config/mc/ini" << 'EOF'
+[Midnight-Commander]
+skin=MashDark
+EOF
+
+chown -R "$TARGET_USER:$TARGET_USER" \
+    "$TARGET_HOME/.local/share/mc" \
+    "$TARGET_HOME/.config/mc"
+
+# =============================================
+# Set default shell
+# =============================================
+
+TARGET_SHELL=$(which zsh)
+
+if [[ "$(getent passwd "$TARGET_USER" | cut -d: -f7)" != "$TARGET_SHELL" ]]; then
+    chsh -s "$TARGET_SHELL" "$TARGET_USER"
 fi
 
-echo -e "\n${GREEN}$MSG_DONE${NC}"
-echo -e "\n${YELLOW}Для применения изменений выполните:${NC}"
-echo -e "   exit"
-echo -e "и подключитесь заново по SSH.\n"
+# =============================================
+# Done
+# =============================================
 
-echo -e "${BLUE}Доступные команды:${NC}"
-echo -e "  btop, mc, nano, eza (ls), fzf, duf и другие"
+echo
+echo -e "${GREEN}${MSG_DONE}${NC}"
+
+echo
+echo "Reconnect SSH session to apply changes."
+echo "Installed tools: zsh, oh-my-zsh, powerlevel10k, mc, eza, btop, fzf, bat, network tools"
 
 if [[ "$REINSTALL" == true ]]; then
-    echo -e "\n${GREEN}Переустановка завершена успешно!${NC}"
+    echo -e "\n${GREEN}Reinstall completed successfully!${NC}"
 fi
