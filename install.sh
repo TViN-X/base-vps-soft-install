@@ -137,7 +137,6 @@ set softwrap
 set atblanks
 set backup
 set locking
-set guidestripe 80
 include "/usr/share/nano/*.nanorc"
 NANO
 
