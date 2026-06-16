@@ -32,25 +32,29 @@ echo -e "${BLUE}   VPS Base Soft Install${NC}"
 echo -e "${BLUE}=============================================${NC}"
 
 # =============================================
-# Force TTY input (fix curl | bash issue)
+# Language selection (FIX: no freeze in curl | bash)
 # =============================================
 
-exec < /dev/tty
-
-echo
-echo "Select language:"
-echo "1) Russian"
-echo "2) English"
-read -r LANG_CHOICE
+if [[ -t 0 ]]; then
+    echo
+    echo "Select language:"
+    echo "1) Russian"
+    echo "2) English"
+    read -r LANG_CHOICE
+else
+    LANG_CHOICE=1
+fi
 
 if [[ "$LANG_CHOICE" == "2" ]]; then
     MSG_UPDATE="Updating package lists..."
     MSG_INSTALL="Installing packages..."
     MSG_DONE="Installation completed successfully!"
+    MSG_THEME="Installing MC theme..."
 else
     MSG_UPDATE="Обновление списка пакетов..."
     MSG_INSTALL="Установка пакетов..."
     MSG_DONE="Установка успешно завершена!"
+    MSG_THEME="Установка темы MC..."
 fi
 
 # =============================================
@@ -87,14 +91,16 @@ echo -e "\n${YELLOW}${MSG_UPDATE}${NC}"
 apt update -qq
 
 # =============================================
-# Required system packages
+# Packages
 # =============================================
+
+echo -e "\n${YELLOW}${MSG_INSTALL}${NC}"
 
 apt install -y \
     zsh curl git wget unzip nano mc \
     eza btop htop duf fzf \
     tcpdump nmap iperf3 traceroute whois speedtest-cli \
-    bat
+    bat gnupg
 
 # =============================================
 # Keyrings
@@ -107,10 +113,6 @@ mkdir -p /etc/apt/keyrings
 # =============================================
 
 if ! grep -q "deb.gierens.de" /etc/apt/sources.list.d/gierens.list 2>/dev/null || [[ "$REINSTALL" == true ]]; then
-
-    echo -e "\n${YELLOW}Adding eza repo...${NC}"
-
-    apt install -y gnupg
 
     wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc \
         | gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
@@ -126,8 +128,6 @@ apt update -qq
 # =============================================
 
 if [[ ! -d "$TARGET_HOME/.oh-my-zsh" ]] || [[ "$REINSTALL" == true ]]; then
-    echo -e "\n${YELLOW}Installing Oh My Zsh...${NC}"
-
     sudo -u "$TARGET_USER" sh -c \
     "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
     "" --unattended
@@ -144,7 +144,7 @@ if [[ ! -d "$TARGET_HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]] || [[ "$REIN
 fi
 
 # =============================================
-# ZSH plugins
+# Plugins
 # =============================================
 
 for plugin in zsh-autosuggestions zsh-syntax-highlighting zsh-completions; do
@@ -157,10 +157,10 @@ for plugin in zsh-autosuggestions zsh-syntax-highlighting zsh-completions; do
 done
 
 # =============================================
-# Download p10k config (IMPORTANT FIX)
+# p10k config (FIXED: always download from repo)
 # =============================================
 
-echo -e "\n${YELLOW}Downloading Powerlevel10k config...${NC}"
+echo -e "\n${YELLOW}Downloading p10k.zsh...${NC}"
 
 curl -fsSL \
 https://raw.githubusercontent.com/TViN-X/base-vps-soft-install/main/p10k.zsh \
@@ -174,7 +174,6 @@ chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.p10k.zsh"
 
 cat > "$TARGET_HOME/.zshrc" << 'EOF'
 export ZSH="$HOME/.oh-my-zsh"
-
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(
@@ -197,17 +196,16 @@ alias ll="eza -lh --icons --group-directories-first"
 alias la="eza -lah --icons --group-directories-first"
 alias l="eza -lh --icons --group-directories-first"
 
-alias cat="batcat 2>/dev/null || bat"
+alias cat="bat 2>/dev/null || batcat"
 alias ff="fzf"
 
-# Powerlevel10k
 [[ -r ~/.p10k.zsh ]] && source ~/.p10k.zsh
 EOF
 
 chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.zshrc"
 
 # =============================================
-# nano config
+# nano
 # =============================================
 
 cat > "$TARGET_HOME/.nanorc" << 'EOF'
@@ -218,17 +216,16 @@ set tabsize 4
 set softwrap
 set constantshow
 set minibar
-set stateflags
 include "/usr/share/nano/*.nanorc"
 EOF
 
 chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.nanorc"
 
 # =============================================
-# Midnight Commander + MashDark theme
+# Midnight Commander + MashDark
 # =============================================
 
-echo -e "\n${YELLOW}Installing MC theme MashDark...${NC}"
+echo -e "\n${YELLOW}${MSG_THEME}${NC}"
 
 rm -rf /tmp/mashdark
 git clone https://github.com/notnout/mashdark.git /tmp/mashdark
@@ -249,7 +246,7 @@ chown -R "$TARGET_USER:$TARGET_USER" \
     "$TARGET_HOME/.config/mc"
 
 # =============================================
-# Set default shell
+# Shell
 # =============================================
 
 TARGET_SHELL=$(which zsh)
@@ -266,8 +263,8 @@ echo
 echo -e "${GREEN}${MSG_DONE}${NC}"
 
 echo
-echo "Reconnect SSH session to apply changes."
-echo "Installed tools: zsh, oh-my-zsh, powerlevel10k, mc, eza, btop, fzf, bat, network tools"
+echo "Reconnect SSH to apply changes."
+echo "Tools installed: zsh, oh-my-zsh, powerlevel10k, mc, eza, bat, fzf, network tools"
 
 if [[ "$REINSTALL" == true ]]; then
     echo -e "\n${GREEN}Reinstall completed successfully!${NC}"
