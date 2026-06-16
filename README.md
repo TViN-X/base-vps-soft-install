@@ -1,148 +1,240 @@
 # 🚀 base-vps-soft-install
 
-**Простой и мощный скрипт** для быстрой настройки современного терминала и необходимых утилит на чистом **Ubuntu 24.04** или **Debian 12** VPS.
+Простой и мощный скрипт для быстрой настройки современного, удобного и красивого терминала на чистом VPS с **Ubuntu 24.04** или **Debian 12**.
 
-![Powerlevel10k](https://img.shields.io/badge/Zsh-Powerlevel10k-blue?style=flat-square&logo=zsh)
+![Zsh](https://img.shields.io/badge/Zsh-Powerlevel10k-blue?style=flat-square&logo=zsh)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04-E95420?style=flat-square&logo=ubuntu)
-![Debian](https://img.shields.io/badge/Debian-12-000000?style=flat-square&logo=debian)
+![Debian](https://img.shields.io/badge/Debian-12-A81D33?style=flat-square&logo=debian)
+![License](https://img.shields.io/github/license/TViN-X/base-vps-soft-install?style=flat-square)
+
+---
 
 ## ✨ Возможности
 
-- **Zsh** + **Oh My Zsh** + **Powerlevel10k** 
-- Плагины: autosuggestions, syntax-highlighting, completions
-- Современные утилиты: `eza`, `btop`, `fzf`, `duf` и др.
-- Полный набор сетевых инструментов (`nmap`, `tcpdump`, `iperf3`, `traceroute`, `whois` и т.д.)
-- Автоматическая смена оболочки по умолчанию на Zsh
-- Интерактивная настройка внешнего вида Powerlevel10k
+### 🖥 Современный терминал
+
+- Zsh
+- Oh My Zsh
+- Powerlevel10k
+- Автоматическая установка пользовательской конфигурации `p10k.zsh`
+- Постоянный тонкий мигающий курсор
+
+### 🔌 Полезные плагины
+
+- zsh-autosuggestions
+- zsh-syntax-highlighting
+- zsh-completions
+
+### 🛠 Современные утилиты
+
+- `eza` — современная замена `ls`
+- `btop` — красивый мониторинг системы
+- `htop` — классический мониторинг процессов
+- `mc` — Midnight Commander
+- `nano` — настроенный текстовый редактор
+- `fzf` — быстрый fuzzy-поиск
+- `duf` — красивый просмотр использования дисков
+
+### 🌐 Сетевые инструменты
+
+- `nmap`
+- `tcpdump`
+- `iperf3`
+- `speedtest-cli`
+- и другие полезные сетевые утилиты
+
+### ⚙ Дополнительно
+
 - Поддержка русского и английского языка
-- Красивый вывод статуса установки и список доступных команд
+- Идемпотентность — скрипт можно запускать многократно
+- Режим полной переустановки (`--reinstall`)
+
+---
 
 ## 📥 Быстрая установка
 
+### Рекомендуемый способ
+
 ```bash
-# Одной командой (рекомендуется)
 curl -fsSL https://raw.githubusercontent.com/TViN-X/base-vps-soft-install/main/install.sh | bash
 ```
 
-Или классический способ:
+### Классический способ
 
 ```bash
 git clone https://github.com/TViN-X/base-vps-soft-install.git
+
 cd base-vps-soft-install
+
 chmod +x install.sh
+
 sudo ./install.sh
 ```
 
-## 🛠 Что устанавливает скрипт
+---
+
+## 🔄 Полная переустановка
+
+Если необходимо удалить старые конфигурации и установить всё заново:
+
+```bash
+sudo ./install.sh --reinstall
+```
+
+---
+
+## 📦 Что устанавливает скрипт
 
 ### Терминал и оболочка
-- **Zsh** + **Oh My Zsh** + **Powerlevel10k**
-- Плагины: `zsh-autosuggestions`, `zsh-syntax-highlighting`, `zsh-completions`
 
-### Утилиты и инструменты
+| Компонент | Назначение |
+|-----------|------------|
+| Zsh | Современная оболочка |
+| Oh My Zsh | Менеджер конфигурации Zsh |
+| Powerlevel10k | Быстрая и красивая тема |
+| zsh-autosuggestions | Подсказки команд |
+| zsh-syntax-highlighting | Подсветка синтаксиса |
+| zsh-completions | Дополнительные автодополнения |
 
-| Утилита         | Назначение                              |
-|-----------------|-----------------------------------------|
-| `eza`           | Современная замена `ls` с иконками     |
-| `btop`          | Красивый мониторинг системы             |
-| `htop`          | Классический мониторинг процессов       |
-| `fzf`           | Нечёткий поиск (fuzzy finder)           |
-| `duf`           | Красивый вывод использования дисков     |
-| `nmap`          | Сканирование сети                       |
-| `tcpdump`       | Захват и анализ трафика                 |
-| `iperf3`        | Тестирование пропускной способности     |
-| `speedtest-cli` | Тест скорости интернета                 |
-| `curl`, `wget`, `traceroute`, `whois` | Базовые сетевые инструменты     |
+---
+
+### Утилиты
+
+| Утилита | Назначение |
+|----------|------------|
+| eza | Современная замена `ls` |
+| btop | Мониторинг системы |
+| htop | Просмотр процессов |
+| mc | Файловый менеджер |
+| nano | Текстовый редактор |
+| fzf | Fuzzy-поиск |
+| duf | Использование дисков |
+| curl | Работа с HTTP-запросами |
+| wget | Загрузка файлов |
+| unzip | Работа с архивами |
+
+---
+
+### Сетевые инструменты
+
+| Утилита | Назначение |
+|----------|------------|
+| nmap | Сканирование сети |
+| tcpdump | Анализ сетевого трафика |
+| iperf3 | Тестирование пропускной способности |
+| speedtest-cli | Проверка скорости интернета |
+
+---
 
 ## 📋 После установки
 
-После завершения скрипта:
-1. Закройте текущую сессию SSH и подключитесь заново.
-2. При первом запуске Zsh запустится **мастер настройки Powerlevel10k** — пройдите его (рекомендуется стиль **Lean**).
+1. Закройте текущую SSH-сессию.
+2. Подключитесь к серверу заново.
+3. Новая оболочка Zsh будет активирована автоматически.
+4. Powerlevel10k загрузится с готовой конфигурацией.
 
-### Полезные алиасы
+---
 
-- `ls`, `ll`, `la` — через `eza` с иконками
-- `find` — через `fzf`
+## ⚡ Полезные алиасы
+
+После установки будут доступны удобные команды:
+
+```bash
+ls
+ll
+la
+l
+```
+
+Все они используют `eza` вместо стандартного `ls`.
+
+Также доступен быстрый поиск через `fzf`.
+
+---
 
 ## 📌 Рекомендации
 
-- При использовании **Windows Terminal** + рекмоендую поставить **Nerd Font** https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip (MesloLGS NF, JetBrainsMono NF, etc.) для нормального отображения иконок в терминале.
+Для корректного отображения иконок рекомендуется использовать:
+
+- Windows Terminal
+- Nerd Fonts
+
+### Рекомендуемый шрифт
+
+**MesloLGS NF**
+
+Скачать:
+
+https://github.com/romkatv/powerlevel10k#manual-font-installation
+
 ---
 
-## English Version / Английская версия
+## 🖼 Пример внешнего вида
 
-# 🚀 base-vps-soft-install
+![Powerlevel10k Preview](https://raw.githubusercontent.com/romkatv/powerlevel10k-media/master/prompt-styles-high-contrast.png)
 
-**Simple and powerful script** for quick setup of a modern terminal and essential utilities on a fresh **Ubuntu 24.04** or **Debian 12** VPS.
+---
 
-![Powerlevel10k](https://img.shields.io/badge/Zsh-Powerlevel10k-blue?style=flat-square&logo=zsh)
-![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04-E95420?style=flat-square&logo=ubuntu)
-![Debian](https://img.shields.io/badge/Debian-12-000000?style=flat-square&logo=debian)
+## 🔒 Поддерживаемые системы
 
-## ✨ Features
+| ОС | Версия |
+|-----|---------|
+| Ubuntu | 24.04 |
+| Debian | 12 |
 
-- **Zsh** + **Oh My Zsh** + **Powerlevel10k** 
-- Plugins: autosuggestions, syntax-highlighting, completions
-- Modern utilities: `eza`, `btop`, `fzf`, `duf`, etc.
-- Full set of networking tools (`nmap`, `tcpdump`, `iperf3`, `traceroute`, `whois`, etc.)
-- Automatic switch to Zsh as default shell
-- Interactive Powerlevel10k appearance setup
-- Support for Russian and English languages
-- Beautiful installation status output and list of available commands
+---
 
-## 📥 Quick Installation
+## 📄 Лицензия
+
+Проект распространяется под лицензией MIT.
+
+Подробнее см. в файле:
+
+```text
+LICENSE
+```
+
+---
+
+# 🇬🇧 English
+
+## 🚀 base-vps-soft-install
+
+Simple and powerful script for quickly setting up a modern, beautiful and productive terminal on a fresh VPS running **Ubuntu 24.04** or **Debian 12**.
+
+### Features
+
+- Zsh + Oh My Zsh + Powerlevel10k
+- Autosuggestions, syntax highlighting and completions
+- Thin blinking cursor
+- Modern CLI utilities
+- Network tools
+- Russian and English language support
+- Reinstall mode (`--reinstall`)
+- Idempotent installation
+
+### Quick Install
 
 ```bash
-# One command (recommended)
 curl -fsSL https://raw.githubusercontent.com/TViN-X/base-vps-soft-install/main/install.sh | bash
 ```
 
-Or the classic way:
+### Reinstall
 
 ```bash
-git clone https://github.com/TViN-X/base-vps-soft-install.git
-cd base-vps-soft-install
-chmod +x install.sh
-sudo ./install.sh
+sudo ./install.sh --reinstall
 ```
 
-## 🛠 What the Script Installs
+### Recommended Terminal
 
-### Terminal & Shell
-- **Zsh** + **Oh My Zsh** + **Powerlevel10k**
-- Plugins: `zsh-autosuggestions`, `zsh-syntax-highlighting`, `zsh-completions`
+- Windows Terminal
+- MesloLGS NF Nerd Font
 
-### Utilities & Tools
+### Supported Systems
 
-| Utility         | Purpose                                 |
-|-----------------|-----------------------------------------|
-| `eza`           | Modern `ls` replacement with icons      |
-| `btop`          | Beautiful system monitoring             |
-| `htop`          | Classic process monitoring              |
-| `fzf`           | Fuzzy finder                            |
-| `duf`           | Beautiful disk usage display            |
-| `nmap`          | Network scanning                        |
-| `tcpdump`       | Traffic capture and analysis            |
-| `iperf3`        | Bandwidth testing                       |
-| `speedtest-cli` | Internet speed test                     |
-| `curl`, `wget`, `traceroute`, `whois` | Basic networking tools         |
+- Ubuntu 24.04
+- Debian 12
 
-## 📋 After Installation
+---
 
-After the script finishes:
-1. Close your current SSH session and reconnect.
-2. On first Zsh launch, the **Powerlevel10k configuration wizard** will start — go through it (recommended **Lean** style).
-
-### Useful Aliases
-
-- `ls`, `ll`, `la` — powered by `eza` with icons
-- `find` — powered by `fzf`
-
-## 🎨 Screenshots
-
-(Добавьте сюда скриншоты после теста)
-
-## 📌 Recommendations
-
-- Use **Windows Terminal** + **Nerd Font** https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip (MesloLGS NF, JetBrainsMono NF, etc.) for best icon display.
+Made with ❤️ for VPS users.
