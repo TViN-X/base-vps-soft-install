@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # =============================================
 # Base VPS Soft Install Script
 # Для Ubuntu 24.04 / Debian 12
@@ -15,7 +14,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${BLUE}=============================================${NC}"
-echo -e "${BLUE}   Установка терминала и утилит для ubuntu 24 и debian 12${NC}"
+echo -e "${BLUE}   Установка терминала и утилит для Ubuntu/Debian${NC}"
 echo -e "${BLUE}=============================================${NC}"
 
 # Выбор языка
@@ -49,10 +48,9 @@ apt update -qq
 
 # Установка всех пакетов
 echo -e "\n${YELLOW}$MSG_INSTALL${NC}"
-
 apt install -y \
     zsh curl git wget unzip \
-    eza btop htop duf fzf \
+    eza btop htop duf fzf mc nano \
     tcpdump nmap iperf3 traceroute whois \
     speedtest-cli
 
@@ -60,7 +58,6 @@ apt install -y \
 echo -e "\n${YELLOW}Установка Oh My Zsh и Powerlevel10k...${NC}"
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Powerlevel10k
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
 
 # Плагины
@@ -91,9 +88,29 @@ alias l="eza -lh --icons --group-directories-first"
 alias cat="batcat 2>/dev/null || cat"
 alias find="fzf"
 
-# Powerlevel10k instant prompt
+# Powerlevel10k
 [[ ! -r ~/.p10k.zsh ]] || source ~/.p10k.zsh
 EOL
+
+# Настройка nano
+echo -e "\n${YELLOW}Настройка редактора nano...${NC}"
+cat > ~/.nanorc << 'NANO'
+set linenumbers
+set mouse
+set historylog
+set autoindent
+set tabsize 4
+set minibar
+set stateflags
+set indicator
+set constantshow
+set softwrap
+set atblanks
+set backup
+set locking
+set guidestripe 80
+include "/usr/share/nano/*.nanorc"
+NANO
 
 # Делаем zsh оболочкой по умолчанию
 chsh -s $(which zsh) "$SUDO_USER" 2>/dev/null || chsh -s $(which zsh)
@@ -106,6 +123,8 @@ echo -e "и подключитесь заново по SSH.\n"
 echo -e "${BLUE}Доступные команды после установки:${NC}"
 echo -e "  ${GREEN}btop${NC}          — красивый мониторинг системы"
 echo -e "  ${GREEN}htop${NC}          — классический мониторинг процессов"
+echo -e "  ${GREEN}mc${NC}            — Midnight Commander (файловый менеджер)"
+echo -e "  ${GREEN}nano${NC}          — удобный редактор с расширенной настройкой"
 echo -e "  ${GREEN}eza (ls/ll/la)${NC} — современный ls с иконками"
 echo -e "  ${GREEN}fzf${NC}           — нечёткий поиск (alias find)"
 echo -e "  ${GREEN}duf${NC}           — удобный просмотр дисков"
@@ -113,6 +132,5 @@ echo -e "  ${GREEN}nmap${NC}          — сканирование сети"
 echo -e "  ${GREEN}tcpdump${NC}       — захват трафика"
 echo -e "  ${GREEN}iperf3${NC}        — тестирование скорости"
 echo -e "  ${GREEN}speedtest${NC}     — тест скорости интернета"
-echo -e "  ${GREEN}powerlevel10k${NC} — запустится автоматически при первом входе"
 
-echo -e "\n${YELLOW}Рекомендация:${NC} После первого входа пройдите настройку Powerlevel10k."
+echo -e "\n${YELLOW}Рекомендация:${NC} Powerlevel10k настроен автоматически через p10k.zsh"
