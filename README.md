@@ -5,7 +5,6 @@
 ![Zsh](https://img.shields.io/badge/Zsh-Powerlevel10k-blue?style=flat-square&logo=zsh)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04-E95420?style=flat-square&logo=ubuntu)
 ![Debian](https://img.shields.io/badge/Debian-12-A81D33?style=flat-square&logo=debian)
-![License](https://img.shields.io/github/license/TViN-X/base-vps-soft-install?style=flat-square)
 
 ---
 
