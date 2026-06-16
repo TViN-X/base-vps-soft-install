@@ -6,6 +6,13 @@
 
 set -e
 
+# Обработка аргументов
+REINSTALL=false
+if [[ "$1" == "--reinstall" || "$1" == "-r" ]]; then
+    REINSTALL=true
+    echo -e "\033[1;33m⚠️  Режим полной переустановки включён\033[0m"
+fi
+
 # Цвета
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -14,7 +21,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${BLUE}=============================================${NC}"
-echo -e "${BLUE}   Установка терминала и утилит для Ubuntu/Debian${NC}"
+echo -e "${BLUE}   Установка терминала и утилит для VPS${NC}"
 echo -e "${BLUE}=============================================${NC}"
 
 # Выбор языка
@@ -27,10 +34,19 @@ if [[ "$LANG_CHOICE" == "2" ]]; then
     MSG_UPDATE="Updating package lists..."
     MSG_INSTALL="Installing packages..."
     MSG_DONE="Installation completed successfully!"
+    MSG_REINSTALL="Full reinstall mode"
 else
     MSG_UPDATE="Обновление списка пакетов..."
     MSG_INSTALL="Установка пакетов..."
     MSG_DONE="Установка успешно завершена!"
+    MSG_REINSTALL="Полная переустановка"
+fi
+
+# Если режим переустановки — очищаем старые конфиги
+if [[ "$REINSTALL" == true ]]; then
+    echo -e "\n${YELLOW}Выполняется очистка перед переустановкой...${NC}"
+    rm -rf ~/.oh-my-zsh ~/.p10k.zsh ~/.zshrc ~/.nanorc 2>/dev/null || true
+    echo -e "${GREEN}Старые конфигурации удалены${NC}"
 fi
 
 # Обновление системы
@@ -38,13 +54,15 @@ echo -e "\n${YELLOW}$MSG_UPDATE${NC}"
 apt update -qq
 
 # Добавление репозитория eza
-echo -e "\n${YELLOW}Добавление репозитория eza...${NC}"
-apt install -y wget gnupg
-wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | tee /etc/apt/sources.list.d/gierens.list
+if ! grep -q "deb.gierens.de" /etc/apt/sources.list.d/gierens.list 2>/dev/null || [[ "$REINSTALL" == true ]]; then
+    echo -e "\n${YELLOW}Добавление/обновление репозитория eza...${NC}"
+    apt install -y wget gnupg
+    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | tee /etc/apt/sources.list.d/gierens.list
+fi
 apt update -qq
 
-# Установка всех пакетов
+# Установка пакетов
 echo -e "\n${YELLOW}$MSG_INSTALL${NC}"
 apt install -y \
     zsh curl git wget unzip \
@@ -53,19 +71,24 @@ apt install -y \
     speedtest-cli
 
 # Установка Oh My Zsh + Powerlevel10k
-echo -e "\n${YELLOW}Установка Oh My Zsh и Powerlevel10k...${NC}"
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+if [[ ! -d ~/.oh-my-zsh ]] || [[ "$REINSTALL" == true ]]; then
+    echo -e "\n${YELLOW}Установка Oh My Zsh и Powerlevel10k...${NC}"
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+fi
 
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
+if [[ ! -d ~/.oh-my-zsh/custom/themes/powerlevel10k ]] || [[ "$REINSTALL" == true ]]; then
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
+fi
 
-# Плагины
-git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
-git clone https://github.com/zsh-users/zsh-completions ~/.oh-my-zsh/custom/plugins/zsh-completions
+# Плагины (устанавливаем только если нет)
+for plugin in zsh-autosuggestions zsh-syntax-highlighting zsh-completions; do
+    if [[ ! -d ~/.oh-my-zsh/custom/plugins/$plugin ]] || [[ "$REINSTALL" == true ]]; then
+        git clone --depth=1 https://github.com/zsh-users/$plugin ~/.oh-my-zsh/custom/plugins/$plugin 2>/dev/null || true
+    fi
+done
 
 # Создание .zshrc
 cat > ~/.zshrc << 'EOL'
-# Oh My Zsh
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
@@ -79,14 +102,12 @@ plugins=(
 source $ZSH/oh-my-zsh.sh
 
 # ====================== Курсор ======================
-# Постоянный тонкий мигающий курсор (I-beam)
+# Постоянный тонкий мигающий курсор
 echo -ne '\e[5 q'
 
 function fix_cursor() {
   echo -ne '\e[5 q'
 }
-
-# Применяем при каждом новом промпте
 precmd_functions+=(fix_cursor)
 
 # Алиасы
@@ -102,7 +123,6 @@ alias find="fzf"
 EOL
 
 # Настройка nano
-echo -e "\n${YELLOW}Настройка редактора nano...${NC}"
 cat > ~/.nanorc << 'NANO'
 set linenumbers
 set mouse
@@ -121,20 +141,19 @@ set guidestripe 80
 include "/usr/share/nano/*.nanorc"
 NANO
 
-# Делаем zsh оболочкой по умолчанию
-chsh -s $(which zsh) "$SUDO_USER" 2>/dev/null || chsh -s $(which zsh)
+# Смена оболочки по умолчанию
+if [[ "$SHELL" != */zsh ]]; then
+    chsh -s $(which zsh) "$SUDO_USER" 2>/dev/null || chsh -s $(which zsh)
+fi
 
 echo -e "\n${GREEN}$MSG_DONE${NC}"
 echo -e "\n${YELLOW}Для применения изменений выполните:${NC}"
 echo -e "   exit"
 echo -e "и подключитесь заново по SSH.\n"
 
-echo -e "${BLUE}Доступные команды после установки:${NC}"
-echo -e "  ${GREEN}btop${NC}          — красивый мониторинг системы"
-echo -e "  ${GREEN}mc${NC}            — файловый менеджер Midnight Commander"
-echo -e "  ${GREEN}nano${NC}          — улучшенный текстовый редактор"
-echo -e "  ${GREEN}eza${NC}           — современный ls с иконками"
-echo -e "  ${GREEN}fzf${NC}           — нечёткий поиск (alias find)"
-echo -e "  ${GREEN}duf${NC}           — удобный просмотр дисков"
+echo -e "${BLUE}Доступные команды:${NC}"
+echo -e "  btop, mc, nano, eza (ls), fzf, duf и другие"
 
-echo -e "\n${YELLOW}Курсор:${NC} Тонкий мигающий (постоянно)"
+if [[ "$REINSTALL" == true ]]; then
+    echo -e "\n${GREEN}Переустановка завершена успешно!${NC}"
+fi
