@@ -24,12 +24,10 @@ echo "2) English"
 read -r LANG_CHOICE
 
 if [[ "$LANG_CHOICE" == "2" ]]; then
-    LANG_EN=true
     MSG_UPDATE="Updating package lists..."
     MSG_INSTALL="Installing packages..."
     MSG_DONE="Installation completed successfully!"
 else
-    LANG_EN=false
     MSG_UPDATE="Обновление списка пакетов..."
     MSG_INSTALL="Установка пакетов..."
     MSG_DONE="Установка успешно завершена!"
@@ -80,6 +78,17 @@ plugins=(
 
 source $ZSH/oh-my-zsh.sh
 
+# ====================== Курсор ======================
+# Постоянный тонкий мигающий курсор (I-beam)
+echo -ne '\e[5 q'
+
+function fix_cursor() {
+  echo -ne '\e[5 q'
+}
+
+# Применяем при каждом новом промпте
+precmd_functions+=(fix_cursor)
+
 # Алиасы
 alias ls="eza --icons --group-directories-first"
 alias ll="eza -lh --icons --group-directories-first"
@@ -122,15 +131,10 @@ echo -e "и подключитесь заново по SSH.\n"
 
 echo -e "${BLUE}Доступные команды после установки:${NC}"
 echo -e "  ${GREEN}btop${NC}          — красивый мониторинг системы"
-echo -e "  ${GREEN}htop${NC}          — классический мониторинг процессов"
-echo -e "  ${GREEN}mc${NC}            — Midnight Commander (файловый менеджер)"
-echo -e "  ${GREEN}nano${NC}          — удобный редактор с расширенной настройкой"
-echo -e "  ${GREEN}eza (ls/ll/la)${NC} — современный ls с иконками"
+echo -e "  ${GREEN}mc${NC}            — файловый менеджер Midnight Commander"
+echo -e "  ${GREEN}nano${NC}          — улучшенный текстовый редактор"
+echo -e "  ${GREEN}eza${NC}           — современный ls с иконками"
 echo -e "  ${GREEN}fzf${NC}           — нечёткий поиск (alias find)"
 echo -e "  ${GREEN}duf${NC}           — удобный просмотр дисков"
-echo -e "  ${GREEN}nmap${NC}          — сканирование сети"
-echo -e "  ${GREEN}tcpdump${NC}       — захват трафика"
-echo -e "  ${GREEN}iperf3${NC}        — тестирование скорости"
-echo -e "  ${GREEN}speedtest${NC}     — тест скорости интернета"
 
-echo -e "\n${YELLOW}Рекомендация:${NC} Powerlevel10k настроен автоматически через p10k.zsh"
+echo -e "\n${YELLOW}Курсор:${NC} Тонкий мигающий (постоянно)"
