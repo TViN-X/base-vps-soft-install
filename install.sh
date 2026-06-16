@@ -233,12 +233,23 @@ git clone https://github.com/notnout/mashdark.git /tmp/mashdark
 mkdir -p "$TARGET_HOME/.local/share/mc/skins"
 mkdir -p "$TARGET_HOME/.config/mc"
 
-cp /tmp/mashdark/MashDark.ini \
-   "$TARGET_HOME/.local/share/mc/skins/"
+# ==============================
+# FIX: correct file names
+# ==============================
+
+cp /tmp/mashdark/mashdark.ini \
+   "$TARGET_HOME/.local/share/mc/skins/mashdark.ini"
+
+cp /tmp/mashdark/filehighlight.ini \
+   "$TARGET_HOME/.config/mc/filehighlight.ini"
+
+# ==============================
+# MC config
+# ==============================
 
 cat > "$TARGET_HOME/.config/mc/ini" << 'EOF'
 [Midnight-Commander]
-skin=MashDark
+skin=mashdark
 EOF
 
 chown -R "$TARGET_USER:$TARGET_USER" \
